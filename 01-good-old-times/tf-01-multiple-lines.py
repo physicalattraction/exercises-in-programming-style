@@ -41,7 +41,6 @@ data.append(False) # data[4] is flag indicating if word was found
 data.append('')    # data[5] is the word
 data.append('')    # data[6] is word,NNNN
 data.append(0)     # data[7] is frequency
-data.append(0)     # data[8] is character index in current line
 
 # Open the secondary memory
 word_freqs = touchopen('word_freqs', 'rb+')
@@ -49,7 +48,7 @@ word_freqs = touchopen('word_freqs', 'rb+')
 f = open(sys.argv[1], 'r')
 # Loop over input file's lines
 while True:
-    data[1] = ''.join(f.readlines(1024-552))
+    data[1] = ''.join(f.readlines(1024-552))  # Ignore data[1-7] here, which is actually incorrect
     if data[1] == '': # end of input file
         break
     if data[1][len(data[1])-1] != '\n': # If it does not end with \n
@@ -57,14 +56,13 @@ while True:
     data[2] = None
     data[3] = 0
     # Loop over characters in the line
-    data[8] = 0
     while True:
         if data[2] == None:
-            if data[1][data[8]].isalnum():
+            if data[1][data[3]].isalnum():
                 # We found the start of a word
                 data[2] = data[3]
         else:
-            if not data[1][data[8]].isalnum():
+            if not data[1][data[3]].isalnum():
                 # We found the end of a word. Process it
                 data[4] = False
                 data[5] = data[1][data[2]:data[3]].lower()
@@ -92,8 +90,7 @@ while True:
                 # Let's reset
                 data[2] = None
         data[3] += 1
-        data[8] += 1
-        if data[8] == len(data[1]):
+        if data[3] == len(data[1]):
             break
 # We're done with the input file
 f.close()

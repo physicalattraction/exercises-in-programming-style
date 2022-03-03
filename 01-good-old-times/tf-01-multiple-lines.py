@@ -13,18 +13,18 @@ def touchopen(filename, *args, **kwargs):
 # The constrained memory should have no more than 1024 cells
 data = []
 # We're lucky:
-# The stop words are only 556 characters and the lines are all 
-# less than 80 characters, so we can use that knowledge to 
-# simplify the problem: we can have the stop words loaded in 
+# The stop words are only 556 characters and the lines are all
+# less than 80 characters, so we can use that knowledge to
+# simplify the problem: we can have the stop words loaded in
 # memory while processing one line of the input at a time.
-# If these two assumptions didn't hold, the algorithm would 
+# If these two assumptions didn't hold, the algorithm would
 # need to be changed considerably.
 
-# Overall strategy: (PART 1) read the input file, count the 
-# words, increment/store counts in secondary memory (a file) 
+# Overall strategy: (PART 1) read the input file, count the
+# words, increment/store counts in secondary memory (a file)
 # (PART 2) find the 25 most frequent words in secondary memory
 
-# PART 1: 
+# PART 1:
 # - read the input file one line at a time
 # - filter the characters, normalize to lower case
 # - identify words, increment corresponding counts in file
@@ -41,6 +41,7 @@ data.append(False) # data[4] is flag indicating if word was found
 data.append('')    # data[5] is the word
 data.append('')    # data[6] is word,NNNN
 data.append(0)     # data[7] is frequency
+data.append(0)     # data[8] is character index in current line
 
 # Open the secondary memory
 word_freqs = touchopen('word_freqs', 'rb+')
@@ -48,7 +49,7 @@ word_freqs = touchopen('word_freqs', 'rb+')
 f = open(sys.argv[1], 'r')
 # Loop over input file's lines
 while True:
-    data[1] = f.readline()
+    data[1] = ''.join(f.readlines(1024-552))
     if data[1] == '': # end of input file
         break
     if data[1][len(data[1])-1] != '\n': # If it does not end with \n
@@ -56,13 +57,14 @@ while True:
     data[2] = None
     data[3] = 0
     # Loop over characters in the line
-    for c in data[1]: # elimination of symbol c is exercise
+    data[8] = 0
+    while True:
         if data[2] == None:
-            if c.isalnum():
+            if data[1][data[8]].isalnum():
                 # We found the start of a word
                 data[2] = data[3]
         else:
-            if not c.isalnum():
+            if not data[1][data[8]].isalnum():
                 # We found the end of a word. Process it
                 data[4] = False
                 data[5] = data[1][data[2]:data[3]].lower()
@@ -75,7 +77,7 @@ while True:
                             break;
                         data[7] = int(data[6].split(',')[1])
                         # word, no white space
-                        data[6] = data[6].split(',')[0].strip() 
+                        data[6] = data[6].split(',')[0].strip()
                         if data[5] == data[6]:
                             data[7] += 1
                             data[4] = True
@@ -90,6 +92,9 @@ while True:
                 # Let's reset
                 data[2] = None
         data[3] += 1
+        data[8] += 1
+        if data[8] == len(data[1]):
+            break
 # We're done with the input file
 f.close()
 word_freqs.flush()
@@ -103,6 +108,7 @@ del data
 data = [[]] * 25
 data.append('') # data[25] is word,freq from file
 data.append(0)  # data[26] is freq
+data.append(0)  # data[27] is index in loop over existing frequencies (formerly loop variable i)
 
 # Loop over secondary memory file
 while True:
@@ -111,15 +117,24 @@ while True:
         break
     data[26] = int(data[25].split(',')[1]) # Read it as integer
     data[25] = data[25].split(',')[0].strip() # word
+    data[27] = 0
     # Check if this word has more counts than the ones in memory
-    for i in range(25): # elimination of symbol i is exercise
-        if data[i] == [] or data[i][1] < data[26]:
-            data.insert(i, [data[25], data[26]]) 
+    while True:
+        if data[data[27]] == [] or data[data[27]][1] < data[26]:
+            data.insert(data[27], [data[25], data[26]])
             del data[26] #  delete the last element
             break
-            
-for tf in data[0:25]: # elimination of symbol tf is exercise
+        data[27] += 1
+        if data[27] == 25:
+            break
+
+data[26] = 0  # Index over data to print
+while True:
+    tf = data[data[26]]
     if len(tf) == 2:
         print(tf[0], '-', tf[1])
+    data[26] += 1
+    if data[26] == 25:
+        break
 # We're done
 word_freqs.close()

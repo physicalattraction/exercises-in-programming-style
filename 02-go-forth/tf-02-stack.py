@@ -118,19 +118,18 @@ def sort():
         stack.push(heap['sorted_freqs'].pop())
 
 def print_freqs():
-    stack.push(0)
-    stack.push(False)
-    # Check stack length against 1, because after we process the last
-    # word there will be one item left: the number of words processed
+    stack.push(0)      # number of words printed
+    stack.push(False)  # list_empty
     while not stack.pop() and stack.peek() < 25:
-        heap['i'] = stack.pop()
-        (w, f) = stack.pop();
+        heap['nr_words'] = stack.pop()
+        w, f = stack.pop();
         print(w, '-', f)
         heap['list_empty'] = stack.empty()
-        stack.push(heap['i']);
+        stack.push(heap['nr_words']);
         stack.push(1)
         stack.push(stack.pop() + stack.pop())
         stack.push(heap['list_empty'])
+    del heap['nr_words']; del heap['list_empty']
 
 # The main function
 #

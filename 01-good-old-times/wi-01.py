@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys, os, string
+import shutil
 
 # Utility for handling the intermediate 'secondary memory'
 def touchopen(filename, *args, **kwargs):
@@ -23,6 +24,7 @@ data.append('')    # data[6] is word,p1,p2,...
 data.append('')    # data[7] is current word when looping through word index
 data.append(1)     # data[8] is current page
 data.append(0)     # data[9] is current line page
+data.append([])    # data[10] is list of pages for current word
 
 # Open the secondary memory
 word_index = touchopen('word_index', 'rb+')
@@ -58,16 +60,19 @@ while True:
                         break
                 if not data[4]:
                     word_index.seek(0, 1)  # Needed in Windows
-                    print(f'Empty line becomes "{data[5]},{data[8]}"')
-                    word_index.write(bytes(f"{data[5]},{data[8]}\n", 'utf-8'))
-                    if data[5] == 'single':
-                        raise AssertionError()
+                    word_index.write(bytes(f'{data[5]:>20}' + f',{data[8]:>3}' + ' ' * 396 + '\n', 'utf-8'))
                 else:
-                    print(f'"{data[6]}" becomes "{data[6]},{data[8]}"')
-                    word_index.seek(-(len(data[6])), 1)
+                    word_index.seek(-(len(data[6])+1), 1)
+                    data[7] = data[6].split(',')[0].strip()  # Bring back the leading spaces
+                    data[10] = ''.join(data[6].split(',')[1:]).strip()  # Bring back the leading spaces
                     # Note: by overwriting a longer string than what was there, we are overwriting the next word
-                    word_index.write(bytes(f"{data[6]},{data[8]}\n", 'utf-8'))
-                word_index.seek(0,0)
+                    # There is no "decent" way of doing this correctly, I don't feel like wasting my time on it
+                    # https://bytes.com/topic/python/answers/44208-changing-line-text-file
+                    print(('DRAGONS', len(data[6]), 420-len(data[6] + f',{data[8]:>3}')))
+                    print(f'"{data[6]}"')
+                    print(data[6] + f',{data[8]:>3}' + ' ' * (420-len(data[6] + f',{data[8]:>3}')) + '\n')
+                    word_index.write(bytes(data[7] + "," + data[10] + f',{data[8]:>3}' + ' ' * (420-len(data[7] + "," + data[10] + f',{data[8]:>3}')) + '\n', 'utf-8'))
+                word_index.seek(0, 0)
                 # Let's reset
                 data[2] = None
         data[3] += 1

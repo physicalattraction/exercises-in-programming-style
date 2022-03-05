@@ -20,7 +20,7 @@ else
     styles_to_test=../$1-*
 fi
 
-files=$(echo *.txt)
+files=$(echo pride-and-prejudice-small.txt)
 suite_start=$(date +"%s")
 for dir in $styles_to_test ; do
     cd $dir
@@ -29,13 +29,13 @@ for dir in $styles_to_test ; do
             if [ -x $exe ]; then
                 msg $(date +%T) testing $(basename $dir)/$exe with $file
                 expected=$mydir/$file
-				test_start=$(date +"%s")
-				if [ -e $dir/autorun ] ; then
-					actual=$(./$exe <autorun | grep \# | awk '{print $2,$3,$4}')
-				else
-                	actual=$(./$exe ../$file | grep -)
-				fi
-				test_end=$(date +"%s")
+                test_start=$(date +"%s")
+                if [ -e $dir/autorun ]; then
+                  actual=$(./$exe <autorun | grep \# | awk '{print $2,$3,$4}')
+                else
+                  actual=$(./$exe ../$file | grep -)
+                fi
+                test_end=$(date +"%s")
                 echo "$actual" | diff -b $expected - > /dev/null
                 result=$?
                 total=$((total+1))
